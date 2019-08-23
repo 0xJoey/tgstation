@@ -334,7 +334,7 @@
 			air.temperature = CLAMP(((air.temperature*old_heat_capacity + reaction_energy)/new_heat_capacity),TCMB,INFINITY)
 		return REACTING
 
-/datum/gas_reaction/nitrylformation //The formation of nitryl. Endothermic. Requires N2O as a catalyst.
+/datum/gas_reaction/nitrylformation //The formation of nitryl. Endothermic.
 	priority = 3
 	name = "Nitryl formation"
 	id = "nitrylformation"
@@ -342,8 +342,7 @@
 /datum/gas_reaction/nitrylformation/init_reqs()
 	min_requirements = list(
 		/datum/gas/oxygen = 20,
-		/datum/gas/nitrogen = 20,
-		/datum/gas/nitrous_oxide = 5,
+		/datum/gas/nitrogen = 10,
 		"TEMP" = FIRE_MINIMUM_TEMPERATURE_TO_EXIST*60
 	)
 
@@ -352,12 +351,12 @@
 	var/temperature = air.temperature
 
 	var/old_heat_capacity = air.heat_capacity()
-	var/heat_efficency = min(temperature/(FIRE_MINIMUM_TEMPERATURE_TO_EXIST*100),cached_gases[/datum/gas/oxygen][MOLES],cached_gases[/datum/gas/nitrogen][MOLES])
+	var/heat_efficency = min(temperature/(FIRE_MINIMUM_TEMPERATURE_TO_EXIST*100),cached_gases[/datum/gas/oxygen][MOLES]/2,cached_gases[/datum/gas/nitrogen][MOLES])
 	var/energy_used = heat_efficency*NITRYL_FORMATION_ENERGY
 	ASSERT_GAS(/datum/gas/nitryl,air)
-	if ((cached_gases[/datum/gas/oxygen][MOLES] - heat_efficency < 0 )|| (cached_gases[/datum/gas/nitrogen][MOLES] - heat_efficency < 0)) //Shouldn't produce gas from nothing.
+	if ((cached_gases[/datum/gas/oxygen][MOLES] - heat_efficency*2 < 0 )|| (cached_gases[/datum/gas/nitrogen][MOLES] - heat_efficency < 0)) //Shouldn't produce gas from nothing.
 		return NO_REACTION
-	cached_gases[/datum/gas/oxygen][MOLES] -= heat_efficency
+	cached_gases[/datum/gas/oxygen][MOLES] -= heat_efficency*2
 	cached_gases[/datum/gas/nitrogen][MOLES] -= heat_efficency
 	cached_gases[/datum/gas/nitryl][MOLES] += heat_efficency*2
 
@@ -367,8 +366,125 @@
 			air.temperature = max(((temperature*old_heat_capacity - energy_used)/new_heat_capacity),TCMB)
 		return REACTING
 
-/datum/gas_reaction/bzformation //Formation of BZ by combining plasma and tritium at low pressures. Exothermic.
+/datum/gas_reaction/nitricacidformation //The formation of nitric acid. Slightly exothermic.
 	priority = 4
+	name = "Nitric Acid formation"
+	id = "nitricacidformation"
+
+/datum/gas_reaction/nitricacidformation/init_reqs()
+	min_requirements = list(
+		/datum/gas/nitryl = 30,
+		/datum/gas/water_vapor = 10,
+		"TEMP" = T0C
+	)
+
+/datum/gas_reaction/nitricacidformation/react(datum/gas_mixture/air)
+	var/list/cached_gases = air.gases
+	var/temperature = air.temperature
+
+	var/old_heat_capacity = air.heat_capacity()
+	var/heat_efficency = min(temperature/(T0C*10),cached_gases[/datum/gas/nitryl][MOLES]/3,cached_gases[/datum/gas/water_vapor][MOLES])
+	var/energy_created = heat_efficency*NITRIC_ACID_FORMATION_ENERGY_RELEASED
+
+	ASSERT_GAS(/datum/gas/nitric_acid,air)
+	ASSERT_GAS(/datum/gas/nitric_oxide,air)
+	if ((cached_gases[/datum/gas/nitryl][MOLES] - heat_efficency*3 < 0 )|| (cached_gases[/datum/gas/water_vapor][MOLES] - heat_efficency < 0)) //Shouldn't produce gas from nothing.
+		return NO_REACTION
+	cached_gases[/datum/gas/nitryl][MOLES] -= heat_efficency*3
+	cached_gases[/datum/gas/water_vapor][MOLES] -= heat_efficency
+
+	cached_gases[/datum/gas/nitric_acid][MOLES] += heat_efficency*2
+	cached_gases[/datum/gas/nitric_oxide][MOLES] += heat_efficency
+
+	if(energy_created > 0)
+		var/new_heat_capacity = air.heat_capacity()
+		if(new_heat_capacity > MINIMUM_HEAT_CAPACITY)
+			air.temperature = max(((temperature*old_heat_capacity + energy_created)/new_heat_capacity),TCMB)
+		return REACTING
+
+/datum/gas_reaction/plasmanitration //The formation of nitroplasma. Endothermic. Getting into dangerous territory.
+	priority = 5
+	name = "Nitric Acid formation"
+	id = "nitricacidformation"
+
+/datum/gas_reaction/plasmanitration/init_reqs()
+	min_requirements = list(
+		/datum/gas/nitric_acid = 30,
+		/datum/gas/plasma = 10,
+		"TEMP" = FIRE_MINIMUM_TEMPERATURE_TO_EXIST*20
+	)
+
+/datum/gas_reaction/plasmanitration/react(datum/gas_mixture/air)
+	var/list/cached_gases = air.gases
+	var/temperature = air.temperature
+
+	var/old_heat_capacity = air.heat_capacity()
+	var/heat_efficency = min(temperature/(FIRE_MINIMUM_TEMPERATURE_TO_EXIST),cached_gases[/datum/gas/nitric_acid][MOLES]/3,cached_gases[/datum/gas/plasma][MOLES])
+	var/energy_used = heat_efficency*PLASMA_NITRATION_ENERGY
+
+	ASSERT_GAS(/datum/gas/nitroplasma,air)
+	if ((cached_gases[/datum/gas/nitric_acid][MOLES] - heat_efficency*3 < 0 )|| (cached_gases[/datum/gas/plasma][MOLES] - heat_efficency < 0)) //Shouldn't produce gas from nothing.
+		return NO_REACTION
+	cached_gases[/datum/gas/nitric_acid][MOLES] -= heat_efficency*3
+	cached_gases[/datum/gas/plasma][MOLES] -= heat_efficency
+
+	cached_gases[/datum/gas/nitroplasma][MOLES] += heat_efficency
+
+	if(energy_used > 0)
+		var/new_heat_capacity = air.heat_capacity()
+		if(new_heat_capacity > MINIMUM_HEAT_CAPACITY)
+			air.temperature = max(((temperature*old_heat_capacity - energy_used)/new_heat_capacity),TCMB)
+		return REACTING
+
+/datum/gas_reaction/nitroplasma_decomposition //The decomposition of nitroplasma. Instantaneous and exothermic.
+	priority = 6
+	name = "Nitroplasma decomposition"
+	id = "nitroplasmadecomp"
+
+/datum/gas_reaction/nitroplasma_decomposition/init_reqs()
+	min_requirements = list(
+		/datum/gas/nitroplasma = 1,
+		"TEMP" = FIRE_MINIMUM_TEMPERATURE_TO_EXIST
+	)
+
+/datum/gas_reaction/nitroplasma_decomposition/react(datum/gas_mixture/air, datum/holder)
+	var/list/cached_gases = air.gases
+	var/temperature = air.temperature
+
+	var/old_heat_capacity = air.heat_capacity()
+	var/amount_nuked = cached_gases[/datum/gas/nitroplasma][MOLES]
+	var/energy_released = amount_nuked*NITROPLASMA_DECOMPOSITION_ENERGY
+
+	ASSERT_GAS(/datum/gas/nitric_acid,air)
+	if (cached_gases[/datum/gas/nitric_acid][MOLES] > 5) //Nitric acid inhibits the decomposition
+		return NO_REACTION
+
+	ASSERT_GAS(/datum/gas/plasma,air)
+	ASSERT_GAS(/datum/gas/oxygen,air)
+	ASSERT_GAS(/datum/gas/nitrogen,air)
+	cached_gases[/datum/gas/nitroplasma][MOLES] -= amount_nuked
+
+	cached_gases[/datum/gas/nitrogen][MOLES] += 3*amount_nuked
+	cached_gases[/datum/gas/oxygen][MOLES] += 9*amount_nuked //Makes the mixture rapidly expand into a metric ton of gas
+	cached_gases[/datum/gas/plasma][MOLES] += amount_nuked
+
+	if(energy_released > 0)
+		var/new_heat_capacity = air.heat_capacity()
+		if(new_heat_capacity > MINIMUM_HEAT_CAPACITY)
+			air.temperature = max(((temperature*old_heat_capacity + energy_released)/new_heat_capacity),TCMB)
+
+		if(amount_nuked > 10)
+			if(istype(holder,/datum/pipeline)) //If the reaction is in a pipenet, break a random pipe
+				var/datum/pipeline/pipenet = holder
+				var/obj/machinery/atmospherics/pipe/break_pipe = pick(pipenet.members)
+				break_pipe.obj_break()
+			else if(istype(holder,/obj/machinery/portable_atmospherics/canister)) //If it is in a can, break the can.
+				var/obj/machinery/portable_atmospherics/canister/can = holder
+				can.obj_break()
+		return REACTING
+
+/datum/gas_reaction/bzformation //Formation of BZ by combining plasma and tritium at low pressures. Exothermic.
+	priority = 7
 	name = "BZ Gas formation"
 	id = "bzformation"
 
@@ -377,7 +493,6 @@
 		/datum/gas/nitrous_oxide = 10,
 		/datum/gas/plasma = 10
 	)
-
 
 /datum/gas_reaction/bzformation/react(datum/gas_mixture/air)
 	var/list/cached_gases = air.gases
@@ -406,7 +521,7 @@
 		return REACTING
 
 /datum/gas_reaction/stimformation //Stimulum formation follows a strange pattern of how effective it will be at a given temperature, having some multiple peaks and some large dropoffs. Exo and endo thermic.
-	priority = 5
+	priority = 8
 	name = "Stimulum formation"
 	id = "stimformation"
 
@@ -440,7 +555,7 @@
 		return REACTING
 
 /datum/gas_reaction/nobliumformation //Hyper-Noblium formation is extrememly endothermic, but requires high temperatures to start. Due to its high mass, hyper-nobelium uses large amounts of nitrogen and tritium. BZ can be used as a catalyst to make it less endothermic.
-	priority = 6
+	priority = 10
 	name = "Hyper-Noblium condensation"
 	id = "nobformation"
 

@@ -147,6 +147,20 @@
 	gas_type = /datum/gas/miasma
 	filled = 1
 
+/obj/machinery/portable_atmospherics/canister/nitric_acid
+	name = "nitric acid canister"
+	desc = "Nitric Acid. Not the fun kind of acid."
+	icon_state = "caution"
+	gas_type = /datum/gas/nitric_acid
+	filled = 1
+
+/obj/machinery/portable_atmospherics/canister/nitroplasma
+	name = "nitroplasma canister"
+	desc = "Nitroplasma. Because some maniac found out how to make plasma even more dangerous."
+	icon_state = "caution"
+	gas_type = /datum/gas/nitroplasma
+	filled = 1
+
 
 
 /obj/machinery/portable_atmospherics/canister/proc/get_time_left()

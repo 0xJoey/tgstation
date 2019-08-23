@@ -154,6 +154,30 @@ GLOBAL_LIST_INIT(nonreactive_gases, typecacheof(list(/datum/gas/oxygen, /datum/g
 	moles_visible = MOLES_GAS_VISIBLE * 60
 	rarity = 250
 
+/datum/gas/nitric_acid
+	id = "hno3"
+	specific_heat = 10
+	name = "Nitric Acid"
+	gas_overlay = "nitryl"
+	moles_visible = MOLES_GAS_VISIBLE
+	rarity = 200
+
+/datum/gas/nitric_oxide
+	id = "no"
+	specific_heat = 10
+	name = "Nitric Oxide"
+	gas_overlay = "nitryl"
+	moles_visible = MOLES_GAS_VISIBLE
+	rarity = 150
+
+/datum/gas/nitroplasma
+	id = "nitroplasma"
+	specific_heat = 500
+	name = "Nitroplasma"
+	gas_overlay = "plasma"
+	moles_visible = MOLES_GAS_VISIBLE
+	rarity = 400
+
 /obj/effect/overlay/gas
 	icon = 'icons/effects/atmospherics.dmi'
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
